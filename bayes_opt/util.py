@@ -86,10 +86,10 @@ class UtilityFunction(object):
         
         self._iters_counter = 0
 
-        if kind not in ['ucb', 'ei', 'poi']:
+        if kind not in ['ucb', 'ei', 'poi', 'constraint']:
             err = "The utility function " \
                   "{} has not been implemented, " \
-                  "please choose one of ucb, ei, or poi.".format(kind)
+                  "please choose one of ucb, ei, or poi (or constraint).".format(kind)
             raise NotImplementedError(err)
         else:
             self.kind = kind
@@ -107,6 +107,8 @@ class UtilityFunction(object):
             return self._ei(x, gp, y_max, self.xi)
         if self.kind == 'poi':
             return self._poi(x, gp, y_max, self.xi)
+        if self.kind == 'constraint':
+            return self._constraint(x, gp, y_max, self.xi)
 
     @staticmethod
     def _ucb(x, gp, kappa):
@@ -125,6 +127,18 @@ class UtilityFunction(object):
         a = (mean - y_max - xi)
         z = a / std
         return a * norm.cdf(z) + std * norm.pdf(z)
+    
+    @staticmethod
+    def _constraint(x, gp, y_max, xi):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            mean, std = gp.predict(x, return_std=True)
+  
+        a = (0 - mean - xi)
+        z = a / std     
+        
+        #atm this returns theta, not the actual ei
+        return norm.cdf(z)
 
     @staticmethod
     def _poi(x, gp, y_max, xi):
