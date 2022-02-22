@@ -76,12 +76,21 @@ class UtilityFunction(object):
     An object to compute the acquisition functions.
     """
 
-    def __init__(self, kind, kappa, xi, kappa_decay=1, kappa_decay_delay=0):
+    def __init__(self, kind, kappa, xi, kappa_decay=1, kappa_decay_delay=0, x_constraint = 0.0, y_constraint = 0.0, 
+                 rho = 0.0, M = 0, h_plus = 0.0):
 
         self.kappa = kappa
         self._kappa_decay = kappa_decay
         self._kappa_decay_delay = kappa_decay_delay
-
+        
+        
+        #Just for constraint
+        self.rho = rho
+        self.x_constraint = x_constraint
+        self.y_constraint = y_constraint
+        self.M = M
+        self.h_plus = h_plus
+        
         self.xi = xi
         
         self._iters_counter = 0
@@ -108,7 +117,7 @@ class UtilityFunction(object):
         if self.kind == 'poi':
             return self._poi(x, gp, y_max, self.xi)
         if self.kind == 'constraint':
-            return self._constraint(x, gp, y_max, self.xi)
+            return self._constraint(x, gp, y_max, self.xi, self.x_constraint, self.y_constraint, self.rho, self.M, self.h_plus)
 
     @staticmethod
     def _ucb(x, gp, kappa):
@@ -129,16 +138,20 @@ class UtilityFunction(object):
         return a * norm.cdf(z) + std * norm.pdf(z)
     
     @staticmethod
-    def _constraint(x, gp, y_max, xi):
+    def _constraint(x, gp, y_max, xi, x_k, y_i, rho, M, h_plus):
+        
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             mean, std = gp.predict(x, return_std=True)
-  
+            
         a = (0 - mean - xi)
-        z = a / std     
+        z = a / std
+        minimiser = h_plus - rho / (2*M) * np.linalg.norm(x_k - z + y_i/ rho)
+        
+        theta = norm.cdf(z)
         
         #atm this returns theta, not the actual ei
-        return norm.cdf(z)
+        return (theta * max(0, minimiser - 1) + (1-theta) * max(0, minimiser))
 
     @staticmethod
     def _poi(x, gp, y_max, xi):
