@@ -146,11 +146,10 @@ class UtilityFunction(object):
             
         a = (0 - mean - xi)
         z = a / std
-        minimiser = h_plus - rho / (2*M) * np.linalg.norm(x_k - z + y_i/ rho)
+        minimiser = h_plus - rho / (2*M) * np.linalg.norm(x_k - x + y_i/ rho)
         
         theta = norm.cdf(z)
         
-        #atm this returns theta, not the actual ei
         return (theta * max(0, minimiser - 1) + (1-theta) * max(0, minimiser))
 
     @staticmethod
