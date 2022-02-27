@@ -146,9 +146,8 @@ class UtilityFunction(object):
             
         a = (0 - mean - xi)
         z = a / std
-        minimiser = h_plus - rho / (2*M) * np.linalg.norm(x_k - x + y_i/ rho)
-        
-        theta = norm.cdf(z)
+        minimiser = h_plus - rho / (2*M) * (np.linalg.norm(x_k - x + y_i/ rho)**2)
+        theta = 1 - norm.cdf(z)
         
         return (theta * max(0, minimiser - 1) + (1-theta) * max(0, minimiser))
 
